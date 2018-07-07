@@ -1,0 +1,31 @@
+Copyright: 2018 https://www.freepik.com/free-vector/collection-of-gift-box-with-bow_1362467.htm
+License: license-freepik.txt
+Files:
+g1.svg
+g2.svg
+g3.svg
+g4.svg
+g5.svg
+g6.svg
+g7.svg
+g8.svg
+g9.svg
+
+Copyright: 2018 https://www.freepik.com/free-vector/toy-train-set-in-flat-design_1128101.htm
+License: license-freepik.txt
+Files:
+w0.svg
+w1.svg
+w2.svg
+w3.svg
+w4.svg
+w5.svg
+w6.svg
+w7.svg
+w8.svg
+w9.svg
+
+Copyright: 2018 https://www.vecteezy.com/vector-art/151947-cute-cartoon-train-with-waving-animals
+License: license-vecteezy.txt
+Files:
+background.svg
