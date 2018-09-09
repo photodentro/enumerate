@@ -139,8 +139,16 @@ function queueComplete(event) {
 }
 
 function onR2click(event) {
-  if (event.target.i == r1.tilesNum)
+  if (event.target.i == r1.tilesNum) {
     checkGameOver();
+    return;
+  }
+  // Use a red filter to highlight the error
+  var hilight = new createjs.ColorFilter(1.2, 0, 0, 1, 0, 0, 0, 0);
+  var bitmap = event.target;
+  bitmap.filters = [ hilight ];
+  bitmap.updateCache();
+  stage.update();
 }
 
 function onRmouseover(event) {
