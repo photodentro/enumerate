@@ -328,7 +328,7 @@ function resize() {
   bg.scaleX = stage.canvas.width / bg.image.width;
   bg.scaleY = stage.canvas.height / bg.image.height;
   bg.cache(0, 0, bg.image.width, bg.image.height);
-  
+
   stage.update();
 }
 
@@ -447,7 +447,7 @@ function tick() {
     r2.cont.x -= 0.01 * stage.canvas.width;
     r1.cont.x -= 0.01 * stage.canvas.width;
   } else if (game.overf > 0) {
-    r1.cont.y += 0.015 * stage.canvas.height;
+    r1.cont.y += 0.014 * stage.canvas.height;
     r2.cont.x += r2.cont.dx;
   }
   statusText.text = "Επίπεδο: " + (game.level + 1 ) + ', fps: ' + Math.round(createjs.Ticker.getMeasuredFPS());
