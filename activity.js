@@ -72,7 +72,7 @@ function random(num) {
 function imgByName(name) {
   var i = resourceNames.indexOf(name);
   if (i < 0)
-    console.log(`imgByName failed for name=${name}`);
+    console.log("imgByName failed for name=" + name);
 
   return resources[i];
 }
