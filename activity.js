@@ -37,6 +37,8 @@ var game = {
   overf: 0,  // a frames counter for game over animations
 };
 
+window.onload = init;
+
 // ES6 string templates don't work in old Android WebView
 function sformat(format) {
   var args = arguments;
@@ -161,6 +163,7 @@ function queueComplete(event) {
   createjs.Ticker.on('tick', tick);
   // createjs.Ticker.timingMode = createjs.Ticker.RAF;
   // createjs.Ticker.framerate = 10;
+  setTimeout(resize, 0);  // Edge needs a second resize for some .svg to appear
 }
 
 function onR2click(event) {
