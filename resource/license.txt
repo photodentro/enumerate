@@ -1,3 +1,12 @@
+Copyright: 2018 Georgios Piskopanis, Artemis Georgopoulou
+License: CC BY-NC-SA 4.0
+Files:
+bar_about.svg
+bar_help.svg
+bar_home.svg
+bar_next.svg
+bar_previous.svg
+
 Copyright: 2018 https://www.freepik.com/free-vector/collection-of-gift-box-with-bow_1362467.htm
 License: license-freepik.txt
 Files:
