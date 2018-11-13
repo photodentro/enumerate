@@ -81,6 +81,14 @@ function init() {
 }
 
 function queueFileLoad(event) {
+  // Edge needs the images to be cached before they're used
+  if (resourcesLoaded === 0) {
+    bg = new createjs.Bitmap(event.target);
+    bg.cache();
+  } else {
+    bg.image = event.target;
+    bg.updateCache();
+  }
   resourcesLoaded += 1;
   statusText.text = sformat('Φόρτωση {}%', Math.round(100 * resourcesLoaded / resourceNames.length));
   stage.update();
@@ -163,7 +171,7 @@ function queueComplete(event) {
   createjs.Ticker.on('tick', tick);
   // createjs.Ticker.timingMode = createjs.Ticker.RAF;
   // createjs.Ticker.framerate = 10;
-  setTimeout(resize, 0);  // Edge needs a second resize for some .svg to appear
+  // setTimeout(resize, 0);  // Edge needs a second resize for some .svg to appear
 }
 
 function onR2click(event) {
