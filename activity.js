@@ -19,7 +19,7 @@ var bg;
 var r1 = { tiles: Array(9) };
 var r2 = { tiles: Array(10) };
 // the menu bar buttons
-var r4 = { tiles: Array(5) };
+var r4 = { tiles: Array(6) };
 var statusText;
 var lvlText;
 var ratio = 16 / 9;
@@ -27,7 +27,7 @@ var ratio = 16 / 9;
 // https://bugzilla.mozilla.org/show_bug.cgi?id=874811
 // Additionally, preloadjs currently doesn't work with .svg images.
 // Put the tiles first so that we can get them by index more easily
-var resourceNames = ['g1.svg', 'g2.svg', 'g3.svg', 'g4.svg', 'g5.svg', 'g6.svg', 'g7.svg', 'g8.svg', 'g9.svg', 'g_blank.svg', 'w0.svg', 'w1.svg', 'w2.svg', 'w3.svg', 'w4.svg', 'w5.svg', 'w6.svg', 'w7.svg', 'w8.svg', 'w9.svg', 'bar_home.svg', 'bar_help.svg', 'bar_about.svg', 'bar_previous.svg', 'bar_next.svg', 'background.svg'];
+var resourceNames = ['g1.svg', 'g2.svg', 'g3.svg', 'g4.svg', 'g5.svg', 'g6.svg', 'g7.svg', 'g8.svg', 'g9.svg', 'g_blank.svg', 'w0.svg', 'w1.svg', 'w2.svg', 'w3.svg', 'w4.svg', 'w5.svg', 'w6.svg', 'w7.svg', 'w8.svg', 'w9.svg', 'bar_home.svg', 'bar_help.svg', 'bar_about.svg', 'bar_fullscreen.svg', 'bar_previous.svg', 'bar_next.svg', 'background.svg'];
 var resources = [];
 var resourcesLoaded = 0;
 var game = {
@@ -113,7 +113,8 @@ function imgByName(name) {
 }
 
 function queueComplete(event) {
-  var onMenuClick = [onMenuHome, onMenuHelp, onMenuAbout, onMenuPrevious, onMenuNext];
+  var onMenuClick = [onMenuHome, onMenuHelp, onMenuAbout, onMenuFullscreen,
+    onMenuPrevious, onMenuNext];
   var i;
 
   console.log('Finished loading resources');
@@ -229,6 +230,23 @@ function onMenuHelp(event) {
 
 function onMenuAbout(event) {
   window.open('credits/index_DS_II.html');
+}
+
+function onMenuFullscreen(event) {
+  var doc = window.document;
+  var docEl = doc.documentElement;
+
+  var requestFullScreen = docEl.requestFullscreen || docEl.mozRequestFullScreen
+    || docEl.webkitRequestFullScreen || docEl.msRequestFullscreen;
+  var cancelFullScreen = doc.exitFullscreen || doc.mozCancelFullScreen
+    || doc.webkitExitFullscreen || doc.msExitFullscreen;
+
+  if (!doc.fullscreenElement && !doc.mozFullScreenElement
+    && !doc.webkitFullscreenElement && !doc.msFullscreenElement) {
+    requestFullScreen.call(docEl);
+  } else {
+    cancelFullScreen.call(doc);
+  }
 }
 
 function onMenuPrevious(event) {
@@ -349,7 +367,7 @@ function resize() {
 
   // Region4
   r4.ts = stage.canvas.height / 10;
-  r4.ma = r4.ts / 5;
+  r4.ma = r4.ts / 4;
   r4.x = 0;
   r4.y = stage.canvas.height - r4.ts - 2 * r4.ma;
   alignRegion(r4);
@@ -357,7 +375,7 @@ function resize() {
   r4.tiles[r4.tiles.length - 1].x += r4.ts + r4.ma;
 
   lvlText.text = game.level + 1;
-  lvlText.x = Math.round(4.5 * (r4.ma + r4.ts) + r4.ma / 2);
+  lvlText.x = Math.round(5.5 * (r4.ma + r4.ts) + r4.ma / 2);
   lvlText.y = stage.canvas.height - r4.ma / 2 - r4.ts / 2;
   lvlText.font = sformat('{}px Arial', Math.round(2 * r4.ts / 2));
 
@@ -462,8 +480,8 @@ function initLevel(newLevel) {
   }
 
   // Region4
-  r4.tilesNum = 5;
-  r4.gx = 5;
+  r4.tilesNum = 6;
+  r4.gx = 6;
   r4.gy = 1;
 
   game.over = false;
