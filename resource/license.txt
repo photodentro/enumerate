@@ -1,4 +1,4 @@
-Copyright: 2018 Georgios Piskopanis, Artemis Georgopoulou
+Copyright: 2018 Artemis Georgopoulou, Georgios Piskopanis
 License: CC BY-NC-SA 4.0
 Files:
 bar_about.svg
@@ -7,7 +7,7 @@ bar_home.svg
 bar_next.svg
 bar_previous.svg
 
-Copyright: 2018 https://www.freepik.com/free-vector/collection-of-gift-box-with-bow_1362467.htm
+Copyright: 2018 Artemis Georgopoulou, https://www.freepik.com/free-vector/collection-of-gift-box-with-bow_1362467.htm
 License: license-freepik.txt
 Files:
 g1.svg
@@ -20,7 +20,7 @@ g7.svg
 g8.svg
 g9.svg
 
-Copyright: 2018 https://www.freepik.com/free-vector/toy-train-set-in-flat-design_1128101.htm
+Copyright: 2018 Artemis Georgopoulou, https://www.freepik.com/free-vector/toy-train-set-in-flat-design_1128101.htm
 License: license-freepik.txt
 Files:
 w0.svg
@@ -34,7 +34,7 @@ w7.svg
 w8.svg
 w9.svg
 
-Copyright: 2018 https://www.vecteezy.com/vector-art/151947-cute-cartoon-train-with-waving-animals
+Copyright: 2018 Artemis Georgopoulou, https://www.vecteezy.com/vector-art/151947-cute-cartoon-train-with-waving-animals
 License: license-vecteezy.txt
 Files:
 background.svg
