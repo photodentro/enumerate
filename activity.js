@@ -67,7 +67,7 @@ function setKeyframes(element, rule, duration) {
   var i;
   var name = sformat('{}_animation', e.id);
 
-  e.style.animationName = 'inherit';
+  e.style.animationName = '';
   // First, delete the old animation for this element, if it exists
   for (i = 0; i < act.sheet.cssRules.length; i += 1) {
     if (act.sheet.cssRules[i].name === name) {
@@ -78,8 +78,9 @@ function setKeyframes(element, rule, duration) {
   // TODO: this isn't working in old android webview versions
   act.sheet.insertRule(sformat('@keyframes {} { {} }', name, rule), act.sheet.cssRules.length);
   void e.offsetWidth;  // https://css-tricks.com/restart-css-animation/
-  e.style.animationName = name;
+  // IE needs animationDuration before animationName
   e.style.animationDuration = duration || '2s';
+  e.style.animationName = name;
 }
 
 function onResize(event) {
@@ -150,13 +151,12 @@ function onWagonClick(event) {
     }
     setKeyframes(ge('gifts'), [
       '0% { top: 5em; left: 0em; }',
-      '30% { top: 15.5em; left: 0em; }',
-      sformat('100% { top: 15.5em; left: {}em; }', -60 - dx)].join('\n'), '4s');
+      '45% { top: 15.5em; left: 0em; }',
+      sformat('100% { top: 15.5em; left: {}em; }', -57 - dx)].join('\n'), '4s');
     setKeyframes(ge('train'), [
       '0% { left: 0em; }',
-      sformat('20% { left: {}em; }', dx),
-      sformat('30% { left: {}em; }', dx),
-      '100% { left: -60em; }'].join('\n'), '4s');
+      sformat('35%, 45% { left: {}em; }', dx),
+      '100% { left: -57em; }'].join('\n'), '4s');
     setTimeout(initLevel, 4000, act.level + 1);
   }
 }
@@ -191,7 +191,7 @@ function initLevel(newLevel) {
   for (i = shufa.length - 1; i >= 0; i -= 1) {
     act.gifts[i].src = sformat('resource/g{}.svg', shufa[i] + 1);
     if (i < act.giftsNum) {
-      act.gifts[i].style.display = 'initial';
+      act.gifts[i].style.display = '';
     } else {
       act.gifts[i].style.display = 'none';
     }
