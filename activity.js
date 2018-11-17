@@ -67,7 +67,9 @@ function setKeyframes(element, rule, duration) {
   var i;
   var name = sformat('{}_animation', e.id);
 
+  // The webkit* stuff is for old android webview versions
   e.style.animationName = '';
+  e.style.webkitAnimationName = '';
   // First, delete the old animation for this element, if it exists
   for (i = 0; i < act.sheet.cssRules.length; i += 1) {
     if (act.sheet.cssRules[i].name === name) {
@@ -75,12 +77,17 @@ function setKeyframes(element, rule, duration) {
     }
   }
   // Now add the rule
-  // TODO: this isn't working in old android webview versions
-  act.sheet.insertRule(sformat('@keyframes {} { {} }', name, rule), act.sheet.cssRules.length);
+  try {
+    act.sheet.insertRule(sformat('@keyframes {} { {} }', name, rule), act.sheet.cssRules.length);
+  } catch (err) {
+    act.sheet.insertRule(sformat('@-webkit-keyframes {} { {} }', name, rule), act.sheet.cssRules.length);
+  }
   void e.offsetWidth;  // https://css-tricks.com/restart-css-animation/
   // IE needs animationDuration before animationName
   e.style.animationDuration = duration || '2s';
+  e.style.webkitAnimationDuration = e.style.animationDuration;
   e.style.animationName = name;
+  e.style.webkitAnimationName = e.style.animationName;
 }
 
 function onResize(event) {
