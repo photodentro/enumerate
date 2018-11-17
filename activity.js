@@ -1,49 +1,13 @@
 /*
 Copyright (C) 2018 Alkis Georgopoulos <alkisg@gmail.com>.
 SPDX-License-Identifier: CC-BY-SA-4.0
-
- Scaling requirements:
- * We want to be able to support full screen.
- * We don't want to use a specific size like 800x600, because then even the
-   fonts are scaled!
- * We want to rely on a 16:9 aspect ratio.
- So, result:
- * We resize the canvas on window.resize to fit the window while keeping 16:9.
- * We resize/reposition everything manually.
 */
-var stage;
-var bg;
-// Region = {
-//   cont: Container, box: Shape, tiles: [Bitmap], color: String, selectedTile,
-//   gx: GridX, gy: GridY, ts: TileSize, ma: Margin, x, y }
-var r1 = { tiles: Array(9) };
-var r2 = { tiles: Array(10) };
-// the menu bar buttons
-var r4 = { tiles: Array(6) };
-var statusText;
-var lvlText;
-var ratio = 16 / 9;
-// To use .svg images, they must not have width or height='100%':
-// https://bugzilla.mozilla.org/show_bug.cgi?id=874811
-// Additionally, preloadjs currently doesn't work with .svg images.
-// Put the tiles first so that we can get them by index more easily
-var resourceNames = ['g1.svg', 'g2.svg', 'g3.svg', 'g4.svg', 'g5.svg', 'g6.svg', 'g7.svg', 'g8.svg', 'g9.svg', 'g_blank.svg', 'w0.svg', 'w1.svg', 'w2.svg', 'w3.svg', 'w4.svg', 'w5.svg', 'w6.svg', 'w7.svg', 'w8.svg', 'w9.svg', 'bar_home.svg', 'bar_help.svg', 'bar_about.svg', 'bar_fullscreen.svg', 'bar_previous.svg', 'bar_next.svg', 'background.svg'];
-var resources = [];
-var resourcesLoaded = 0;
-var game = {
-  level: 0,
-  hint: 2,
-  over: false,
-  overf: 0,  // a frames counter for game over animations
-};
-
-window.onload = init;
+var act = null;  // activity object, see initActivity()
 
 // ES6 string templates don't work in old Android WebView
 function sformat(format) {
   var args = arguments;
   var i = 0;
-
   return format.replace(/{(\d*)}/g, function sformatReplace(match, number) {
     i += 1;
     if (typeof args[number] !== 'undefined') {
@@ -56,346 +20,9 @@ function sformat(format) {
   });
 }
 
-function init() {
-  var i;
-
-  console.clear();
-  stage = new createjs.Stage('mainCanvas');
-  stage.enableMouseOver();
-  stage.snapToPixelEnabled = true;
-  createjs.Bitmap.prototype.snapToPixel = true;
-  statusText = new createjs.Text('Φόρτωση...', '20px Arial', 'white');
-  statusText.textAlign = 'center';
-  statusText.textBaseline = 'middle';
-  stage.addChild(statusText);
-  resize();
-
-  // Resource preloading
-  for (i = 0; i < resourceNames.length; i += 1) {
-    resources[i] = new Image();
-    resources[i].src = sformat('resource/{}', resourceNames[i]);
-    resources[i].rname = resourceNames[i];
-    resources[i].onload = queueFileLoad;
-  }
-  // The last queueFileLoad calls queueComplete. Execution continues there.
-}
-
-function queueFileLoad(event) {
-  // Edge needs the images to be cached before they're used
-  if (resourcesLoaded === 0) {
-    bg = new createjs.Bitmap(event.target);
-    bg.cache();
-  } else {
-    bg.image = event.target;
-    bg.updateCache();
-  }
-  resourcesLoaded += 1;
-  statusText.text = sformat('Φόρτωση {}%', Math.round(100 * resourcesLoaded / resourceNames.length));
-  stage.update();
-  if (resourcesLoaded === resourceNames.length) {
-    queueComplete(event);
-  }
-}
-
 // Return an integer from 0 to num-1.
 function random(num) {
   return Math.floor(Math.random() * num);
-}
-
-function imgByName(name) {
-  var i = resourceNames.indexOf(name);
-
-  if (i < 0) {
-    console.log(sformat('imgByName failed for name={}', name));
-  }
-
-  return resources[i];
-}
-
-function queueComplete(event) {
-  var onMenuClick = [onMenuHome, onMenuHelp, onMenuAbout, onMenuFullscreen,
-    onMenuPrevious, onMenuNext];
-  var i;
-
-  console.log('Finished loading resources');
-  // We only keep statusText for debugging; not visible in production builds
-  statusText.visible = false;
-  bg = new createjs.Bitmap(imgByName('background.svg'));
-  stage.addChild(bg);
-
-  r1.cont = new createjs.Container();
-  stage.addChild(r1.cont);
-  // We always initialize the max number of tiles, and reuse them
-  for (i = 0; i < r1.tiles.length; i += 1) {
-    r1.tiles[i] = new createjs.Bitmap(imgByName('g_blank.svg'));
-    r1.tiles[i].i = i;
-    r1.cont.addChild(r1.tiles[i]);
-  }
-
-  r2.cont = new createjs.Container();
-  stage.addChild(r2.cont);
-  for (i = 0; i < r2.tiles.length; i += 1) {
-    r2.tiles[i] = new createjs.Bitmap(imgByName(sformat('w{}.svg', i)));
-    if (i !== 0) {
-      r2.tiles[i].addEventListener('click', onR2click);
-      r2.tiles[i].addEventListener('mouseover', onRmouseover);
-      r2.tiles[i].addEventListener('mouseout', onRmouseout);
-    }
-    r2.tiles[i].i = i;
-    r2.cont.addChild(r2.tiles[i]);
-  }
-
-  r4.cont = new createjs.Container();
-  stage.addChild(r4.cont);
-  for (i = 0; i < r4.tiles.length; i += 1) {
-    r4.tiles[i] = new createjs.Bitmap(resources[resourceNames.indexOf('bar_home.svg') + i]);
-    r4.tiles[i].addEventListener('click', onMenuClick[i]);
-    r4.tiles[i].addEventListener('mouseover', onRmouseover);
-    r4.tiles[i].addEventListener('mouseout', onRmouseout);
-    r4.tiles[i].i = i;
-    r4.cont.addChild(r4.tiles[i]);
-  }
-
-  lvlText = new createjs.Text('1', '20px Arial', 'white');
-  lvlText.textAlign = 'center';
-  lvlText.textBaseline = 'middle';
-  stage.addChild(lvlText);
-
-  // Bring statusText in front of everything
-  statusText.textAlign = 'right';
-  statusText.textBaseline = 'alphabetic';
-  stage.setChildIndex(statusText, stage.numChildren - 1);
-
-  initLevel(game.level);
-  setTimeout(showHint, 500);
-  window.addEventListener('resize', resize, false);
-  createjs.Ticker.on('tick', tick);
-  // createjs.Ticker.timingMode = createjs.Ticker.RAF;
-  // createjs.Ticker.framerate = 10;
-  // setTimeout(resize, 0);  // Edge needs a second resize for some .svg to appear
-}
-
-function onR2click(event) {
-  var hilight;
-  var bitmap;
-
-  if (event.target.i === r1.tilesNum) {
-    checkGameOver();
-    return;
-  }
-  // Use a red filter to highlight the error
-  hilight = new createjs.ColorFilter(1.2, 0, 0, 1, 0, 0, 0, 0);
-  bitmap = event.target;
-  bitmap.filters = [hilight];
-  bitmap.updateCache();
-  stage.update();
-}
-
-function onRmouseover(event) {
-  var hilight = new createjs.ColorFilter(1.2, 1.2, 1.2, 1, 0, 0, 0, 0);
-  var bitmap;
-
-  // Support both real and fake events
-  if ('target' in event) {
-    bitmap = event.target;
-  } else {
-    bitmap = event;
-  }
-  bitmap.filters = [hilight];
-  bitmap.updateCache();
-  stage.update();
-}
-
-function onRmouseout(event) {
-  var bitmap;
-
-  // Support both real and fake events
-  if ('target' in event) {
-    bitmap = event.target;
-  } else {
-    bitmap = event;
-  }
-  bitmap.filters = [];
-  bitmap.updateCache();
-  stage.update();
-}
-
-function onMenuHome(event) {
-  window.history.back();
-}
-
-function onMenuHelp(event) {
-  alert('Κάντε κλικ στο βαγόνι με τον αριθμό που είναι ίδιος με το πλήθος των δώρων.');
-}
-
-function onMenuAbout(event) {
-  window.open('credits/index_DS_II.html');
-}
-
-function onMenuFullscreen(event) {
-  var doc = window.document;
-  var docEl = doc.documentElement;
-
-  var requestFullScreen = docEl.requestFullscreen || docEl.mozRequestFullScreen
-    || docEl.webkitRequestFullScreen || docEl.msRequestFullscreen;
-  var cancelFullScreen = doc.exitFullscreen || doc.mozCancelFullScreen
-    || doc.webkitExitFullscreen || doc.msExitFullscreen;
-
-  if (!doc.fullscreenElement && !doc.mozFullScreenElement
-    && !doc.webkitFullscreenElement && !doc.msFullscreenElement) {
-    requestFullScreen.call(docEl);
-  } else {
-    cancelFullScreen.call(doc);
-  }
-}
-
-function onMenuPrevious(event) {
-  initLevel(game.level - 1);
-}
-
-function onMenuNext(event) {
-  initLevel(game.level + 1);
-}
-
-// tilesArray, tileWidth, boxWidth
-function alignTiles(tilesArray, tileW, boxW) {
-  var tilesA = tilesArray;  // work around eslint's no-param-reassign
-  var tilesPerRow;
-  var margin;
-  var i;
-
-  // We do want at least one pixel spacing between the tiles
-  tilesPerRow = Math.floor(boxW / (tileW + 1));
-  // If all tiles fit, use that number
-  tilesPerRow = Math.min(tilesA.length, tilesPerRow);
-  margin = (boxW - tileW * tilesPerRow) / (tilesPerRow - 1);
-  for (i = 0; i < tilesA.length; i += 1) {
-    if (!tilesA[i].image) {
-      console.log(i);
-      console.log(tilesA);
-    }
-    tilesA[i].scaleX = tileW / tilesA[i].image.width;
-    tilesA[i].scaleY = tileW / tilesA[i].image.height;
-    tilesA[i].regX = tilesA[i].image.width / 2;
-    tilesA[i].regY = tilesA[i].image.height / 2;
-    tilesA[i].x = (margin + tileW) * (i % tilesPerRow) + tilesA[i].scaleX * tilesA[i].regX;
-    tilesA[i].y = (margin + tileW) * Math.floor(i / tilesPerRow)
-      + tilesA[i].scaleY * tilesA[i].regY;
-    // These copies are used to preserve the initial coordinates on drag 'n' drop
-    tilesA[i].savedX = tilesA[i].x;
-    tilesA[i].savedY = tilesA[i].y;
-    // These copies are used to preserve the original scale on mouseover
-    tilesA[i].savedscaleX = tilesA[i].scaleX;
-    tilesA[i].savedscaleY = tilesA[i].scaleY;
-    tilesA[i].cache(0, 0, tilesA[i].image.width, tilesA[i].image.height);
-  }
-}
-
-function alignRegion(region) {
-  var r = region;  // work around eslint's no-param-reassign
-
-  r.cont.x = r.x + r.ma;
-  r.cont.y = r.y + r.ma;
-  alignTiles(r.tiles, r.ts, r.gx * r.ts + (r.gx - 1) * r.ma);
-}
-
-// tilesArray, tileWidth, boxWidth
-function alignTrains(region) {
-  var r = region;  // work around eslint's no-param-reassign
-  var i;
-
-  r.cont.x = r.x + r.ma;
-  r.cont.y = r.y + r.ma;
-  for (i = r.tiles.length - 1; i >= 0; i -= 1) {
-    if (i === 0) {
-      // We want the same scale, but not the same size, for the first wagon
-      r.tiles[i].scaleX = r.tiles[1].scaleX;
-      r.tiles[i].scaleY = r.tiles[1].scaleY;
-    } else {
-      r.tiles[i].scaleX = r.ts / r.tiles[i].image.width;
-      r.tiles[i].scaleY = r.tiles[i].scaleX;
-    }
-    // Use their base for reg, so that the wheels align
-    r.tiles[i].regX = r.tiles[i].image.width / 2;
-    r.tiles[i].regY = r.tiles[i].image.height;
-    r.tiles[i].x = i * (0.95 * r.ts) + r.tiles[i].scaleX * r.tiles[i].regX;
-    r.tiles[i].y = 0;
-    // These copies are used to preserve the original scale on mouseover
-    r.tiles[i].savedscaleX = r.tiles[i].scaleX;
-    r.tiles[i].savedscaleY = r.tiles[i].scaleY;
-    r.tiles[i].cache(0, 0, r.tiles[i].image.width, r.tiles[i].image.height);
-
-    // Bring the wagon to the front, to hide its red connector
-    r.cont.setChildIndex(r.tiles[i], r.cont.numChildren - 1);
-  }
-  // The first wagon is wider, move it to the left
-  r.tiles[0].x *= 0.75;
-}
-
-function resize() {
-  // Resize the canvas element
-  var winratio = window.innerWidth / window.innerHeight;
-  if (winratio >= ratio) {
-    stage.canvas.height = window.innerHeight;
-    stage.canvas.width = stage.canvas.height * ratio;
-  } else {
-    stage.canvas.width = window.innerWidth;
-    stage.canvas.height = stage.canvas.width / ratio;
-  }
-
-  // If queueComplete() hasn't been called yet, the rest of the items aren't available
-  if (!('cont' in r1)) {
-    statusText.x = stage.canvas.width / 2;
-    statusText.y = stage.canvas.height / 2;
-    statusText.font = sformat('{}px Arial', Math.round(stage.canvas.height / 10));
-    return;
-  }
-
-  // Region1
-  r1.ts = stage.canvas.width / 14;
-  r1.ma = 0.10 * r1.ts;
-  r1.x = 0.50 * (stage.canvas.width - r1.tilesNum * (r1.ts + r1.ma));
-  r1.y = 0.15 * stage.canvas.height;
-  alignRegion(r1);
-
-  // Region2
-  r2.ts = stage.canvas.width / 12;
-  r2.ma = 0;
-  r2.x = 0.10 * stage.canvas.width;
-  r2.y = 0.62 * stage.canvas.height;
-  alignTrains(r2);
-
-  // Region4
-  r4.ts = stage.canvas.height / 10;
-  r4.ma = r4.ts / 4;
-  r4.x = 0;
-  r4.y = stage.canvas.height - r4.ts - 2 * r4.ma;
-  alignRegion(r4);
-  // Make space for the level
-  r4.tiles[r4.tiles.length - 1].x += r4.ts + r4.ma;
-
-  lvlText.text = game.level + 1;
-  lvlText.x = Math.round(5.5 * (r4.ma + r4.ts) + r4.ma / 2);
-  lvlText.y = stage.canvas.height - r4.ma / 2 - r4.ts / 2;
-  lvlText.font = sformat('{}px Arial', Math.round(2 * r4.ts / 2));
-
-  // If game.level is single digit, move lvlText and bar_previous a bit left
-  if (game.level + 1 < 10) {
-    lvlText.x -= r4.ts / 4;
-    r4.tiles[r4.tiles.length - 1].x -= r4.ts / 2;
-  }
-
-  statusText.text = sformat('Επίπεδο: {}', (game.level + 1));
-  statusText.x = stage.canvas.width - r4.ma;
-  statusText.y = stage.canvas.height - r4.ma;
-  statusText.font = sformat('{}px Arial', Math.round(r4.ts / 2));
-
-  // Fill all the canvas with the background
-  bg.scaleX = stage.canvas.width / bg.image.width;
-  bg.scaleY = stage.canvas.height / bg.image.height;
-  bg.cache(0, 0, bg.image.width, bg.image.height);
-
-  stage.update();
 }
 
 // Return a shuffled array [0, ..., num-1].
@@ -431,110 +58,187 @@ function shuffledArray(num, differentIndex) {
   return result;
 }
 
+function ge(element) {
+  return document.getElementById(element);
+}
+
+function setKeyframes(element, rule, duration) {
+  var e = element;
+  var i;
+  var name = sformat('{}_animation', e.id);
+
+  e.style.animationName = 'inherit';
+  // First, delete the old animation for this element, if it exists
+  for (i = 0; i < act.sheet.cssRules.length; i += 1) {
+    if (act.sheet.cssRules[i].name === name) {
+      act.sheet.deleteRule(i);
+    }
+  }
+  // Now add the rule
+  // TODO: this isn't working in old android webview versions
+  act.sheet.insertRule(sformat('@keyframes {} { {} }', name, rule), act.sheet.cssRules.length);
+  void e.offsetWidth;  // https://css-tricks.com/restart-css-animation/
+  e.style.animationName = name;
+  e.style.animationDuration = duration || '2s';
+}
+
+function onResize(event) {
+  var w = window.innerWidth;
+  var h = window.innerHeight;
+  if (w / h < 640 / 360) {
+    document.body.style.fontSize = sformat('{}px', 10 * w / 640);
+  } else {
+    document.body.style.fontSize = sformat('{}px', 10 * h / 360);
+  }
+}
+
+function doPreventDefault(event) {
+  event.preventDefault();
+}
+
+function onHome(event) {
+  window.history.back();
+}
+
+function onHelp(event) {
+  ge('help').style.display = 'block';
+}
+
+function onHelpHide(event) {
+  ge('help').style.display = 'none';
+}
+
+function onAbout(event) {
+  window.open('credits/index_DS_II.html');
+}
+
+function onFullScreen(event) {
+  var doc = window.document;
+  var docEl = doc.documentElement;
+  var requestFullScreen = docEl.requestFullscreen || docEl.mozRequestFullScreen
+    || docEl.webkitRequestFullScreen || docEl.msRequestFullscreen;
+  var cancelFullScreen = doc.exitFullscreen || doc.mozCancelFullScreen
+    || doc.webkitExitFullscreen || doc.msExitFullscreen;
+
+  if (!doc.fullscreenElement && !doc.mozFullScreenElement
+    && !doc.webkitFullscreenElement && !doc.msFullscreenElement) {
+    requestFullScreen.call(docEl);
+  } else {
+    cancelFullScreen.call(doc);
+  }
+}
+
+function onPrevious(event) {
+  initLevel(act.level - 1);
+}
+
+function onNext(event) {
+  initLevel(act.level + 1);
+}
+
+function onWagonClick(event) {
+  // w0 = 6em, w1 = 5em, g1 = 5em
+  var i;
+  var dx = (5 * (9 - act.giftsNum)) / 2 - 3.3;
+
+  if (act.giftsNum === event.target.i) {
+    for (i = act.giftsNum; i < act.wagons.length; i += 1) {
+      setKeyframes(act.wagons[i], [
+        '0% { opacity: 1; }',
+        '10% { opacity: 0; }',
+        '100% { opacity: 0; }'].join('\n'), '4s');
+    }
+    setKeyframes(ge('gifts'), [
+      '0% { top: 5em; left: 0em; }',
+      '30% { top: 15.5em; left: 0em; }',
+      sformat('100% { top: 15.5em; left: {}em; }', -60 - dx)].join('\n'), '4s');
+    setKeyframes(ge('train'), [
+      '0% { left: 0em; }',
+      sformat('20% { left: {}em; }', dx),
+      sformat('30% { left: {}em; }', dx),
+      '100% { left: -60em; }'].join('\n'), '4s');
+    setTimeout(initLevel, 4000, act.level + 1);
+  }
+}
+
 function initLevel(newLevel) {
-  // Internal game.level number is zero-based; but we display it as 1-based.
+  // Internal act.level number is zero-based; but we display it as 1-based.
   // We allow/fix newLevel if it's outside its proper range.
   var numLevels = 14;
   var min;
   var max;
-  var oldNum = 0;
+  var oldNum = act.giftsNum;
   var i;
-  var shufa;
+  var shufa = shuffledArray(9, false);
 
-  game.level = (newLevel + numLevels) % numLevels;
+  act.level = (newLevel + numLevels) % numLevels;
   // Gifts per level (min…max):
   // 1…3, 1…3, 1…4, 2…4, 2…5, 2…5, 3…6, 3…6, 3…7, 4…7, 4…8, 4…8, 5…9, 5…9
-  min = 1 + Math.floor(game.level / 3);
-  max = 3 + Math.floor(game.level / 2);
+  min = 1 + Math.floor(act.level / 3);
+  max = 3 + Math.floor(act.level / 2);
 
-  // Region1
-  if ('tilesNum' in r1) {
-    oldNum = r1.tilesNum;
-  }
-  r1.tilesNum = min + random(max - min + 1);
+  act.giftsNum = min + random(max - min + 1);
   // Avoid showing the same number of gifts in two subsequent levels
-  if (oldNum === r1.tilesNum) {
-    if (r1.tilesNum < max) {
-      r1.tilesNum += 1;
+  if (oldNum === act.giftsNum) {
+    if (act.giftsNum < max) {
+      act.giftsNum += 1;
     } else {
-      r1.tilesNum -= 1;
-    }
-  }
-  r1.gx = r1.tilesNum;
-  r1.gy = 1;
-  shufa = shuffledArray(r1.tilesNum, false);
-  for (i = 0; i < r1.tiles.length; i += 1) {
-    if (i < r1.tilesNum) {
-      r1.tiles[i].image = imgByName(sformat('g{}.svg', shufa[i] + 1));
-    } else {
-      r1.tiles[i].image = imgByName('g_blank.svg');
+      act.giftsNum -= 1;
     }
   }
 
-  // Region2
-  r2.tilesNum = 10;
-  r2.gx = 10;
-  r2.gy = 1;
-  for (i = 0; i < r2.tiles.length; i += 1) {
-    r2.tiles[i].visible = true;
+  ge('level').innerHTML = act.level + 1;
+  for (i = shufa.length - 1; i >= 0; i -= 1) {
+    act.gifts[i].src = sformat('resource/g{}.svg', shufa[i] + 1);
+    if (i < act.giftsNum) {
+      act.gifts[i].style.display = 'initial';
+    } else {
+      act.gifts[i].style.display = 'none';
+    }
+    if (i === act.giftsNum - 1) {
+      act.wagons[i].classList.remove('lose');
+    } else {
+      act.wagons[i].classList.add('lose');
+    }
   }
-
-  // Region4
-  r4.tilesNum = 6;
-  r4.gx = 6;
-  r4.gy = 1;
-
-  game.over = false;
-  game.overf = 0;
-  resize();
+  setKeyframes(ge('gifts'), 'from { top: -5em; }\nto { top: 5em; }');
+  setKeyframes(ge('train'), 'from { left: 60em; }\nto { left: 0em; }');
 }
 
-function showHint() {
-  if (game.hint % 2 === 0) {
-    onRmouseover(r2.tiles[Math.floor(game.hint / 2)]);
-  } else {
-    onRmouseout(r2.tiles[Math.floor(game.hint / 2)]);
-  }
-
-  game.hint += 1;
-  if (game.hint < 2 * r2.tiles.length) {
-    setTimeout(showHint, 100);
-  }
-}
-
-function checkGameOver() {
+function initActivity() {
   var i;
-  var ps;  // point source
-  var pt;  // point target
 
-  for (i = 0; i < r1.tilesNum; i += 1) {
-    r1.tiles[i].dx = -(r2.tiles[i].x - r1.tiles[i].x) / 40;
+  act = {
+    level: 0,
+    giftsNum: -1,
+    gifts: [],
+    wagons: [],
+    sheet: null,
+  };
+  for (i = 1; i <= 9; i += 1) {
+    act.gifts.push(ge(sformat('g{}', i)));
+    act.wagons.push(ge(sformat('w{}', i)));
+    act.wagons[i - 1].onclick = onWagonClick;
+    act.wagons[i - 1].i = i;
   }
-  ps = r2.cont.localToGlobal(r2.tiles[1].x, r2.tiles[1].y);
-  pt = r1.cont.localToGlobal(r2.tiles[0].x, r2.tiles[0].y);
-  // wagons are not really centered due to the connector
-  r2.cont.dx = (pt.x - ps.x - 0.09 * r1.ts) / 20;
-
-  for (i = r1.tilesNum + 1; i < r2.tiles.length; i += 1) {
-    r2.tiles[i].visible = false;
+  onResize();
+  // Create a <style> element for animations, to avoid CORS issues on Chrome
+  act.sheet = document.styleSheets[0];
+  // TODO: dynamically? document.head.appendChild(document.createElement('style'));
+  // Install event handlers
+  document.body.onresize = onResize;
+  document.body.oncontextmenu = doPreventDefault;
+  ge('bar_home').onclick = onHome;
+  ge('bar_help').onclick = onHelp;
+  ge('help').onclick = onHelpHide;
+  ge('bar_about').onclick = onAbout;
+  ge('bar_fullscreen').onclick = onFullScreen;
+  ge('bar_previous').onclick = onPrevious;
+  ge('bar_next').onclick = onNext;
+  for (i = 0; i < document.images.length; i += 1) {
+    document.images[i].ondragstart = doPreventDefault;
   }
-  game.over = true;
-  setTimeout(onMenuNext, 4000);
-  stage.update();
+  initLevel(act.level);
 }
 
-function tick() {
-  if (game.over) {
-    game.overf += 1;
-  }
-  // Calculations are based on 20 fps
-  if (game.overf > 20) {
-    r2.cont.x -= 0.01 * stage.canvas.width;
-    r1.cont.x -= 0.01 * stage.canvas.width;
-  } else if (game.overf > 0) {
-    r1.cont.y += 0.014 * stage.canvas.height;
-    r2.cont.x += r2.cont.dx;
-  }
-  statusText.text = sformat('Επίπεδο: {}, fps: {}', game.level + 1, Math.round(createjs.Ticker.getMeasuredFPS()));
-  stage.update();
-}
+window.onload = initActivity;
