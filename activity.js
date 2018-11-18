@@ -4,6 +4,12 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 */
 var act = null;  // activity object, see initActivity()
 
+function onError(message, source, lineno, colno, error) {
+  alert(sformat('Σφάλμα προγραμματιστή!\n'
+    + 'message: {}\nsource: {}\nlineno: {}\ncolno: {}\nerror: {}',
+  message, source, lineno, colno, error));
+}
+
 // ES6 string templates don't work in old Android WebView
 function sformat(format) {
   var args = arguments;
@@ -248,4 +254,11 @@ function initActivity() {
   initLevel(act.level);
 }
 
+window.onerror = onError;
 window.onload = initActivity;
+// Call onResize even before the images are loaded
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', onResize);
+} else {  // `DOMContentLoaded` already fired
+  onResize();
+}

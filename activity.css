@@ -56,44 +56,12 @@ body {
   color: white;
   font-size: 10px;
   margin: 0;
-}
-
-#help {
-  display: none;
-  background-color: rgba(63,63,63,0.5);
-  position: fixed;
-  width: 100%;
-  height: 100%;
-  margin: auto;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  right: 0;
-}
-
-#help .dialog {
-  text-align: center;
-  position: absolute;
-  margin: auto;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  right: 0;
-  width: 16em;
-  height: 9em;
-  background-color: white;
-  color: black;
-  padding: 1em;
-  border: 0.2em solid rgb(80,80,80);
-  border-radius: 0.5em;
-  -webkit-filter: drop-shadow(0.5em 0.5em 0.5em rgb(80,80,80));
-  filter: drop-shadow(0.5em 0.5em 0.5em rgb(80,80,80));
-  font-size: 2em;
+  overflow: hidden;  /* avoid scrollbars when dragging outside */
 }
 
 #main {
   /* SVG backgrounds need preserveAspectRatio="none" in many browsers. */
-  background: url('resource/background.svg');
+  background: rgb(181,232,255) url('resource/background.svg');
   -webkit-background-size: 100% 100%;
   -moz-background-size: 100% 100%;
   -o-background-size: 100% 100%;
@@ -103,10 +71,9 @@ body {
   justify-content: space-around;
   height: 36em;
   width: 64em;
-  position: relative;
   text-align: center;
   overflow: hidden;
-  position: absolute;
+  position: fixed;
   margin: auto;
   left: 0;
   top: 0;
@@ -201,4 +168,37 @@ body {
   display: inline;
   font-size: 3em;
   vertical-align: middle;
+}
+
+#help {
+  display: none;
+  background-color: rgba(63,63,63,0.5);
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  margin: auto;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+}
+
+#help .dialog {
+  text-align: center;
+  position: absolute;
+  margin: auto;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  width: 14em;
+  height: 8em;
+  background-color: white;
+  color: black;
+  padding: 1em;
+  border: 0.2em solid rgb(80,80,80);
+  border-radius: 0.5em;
+  -webkit-filter: drop-shadow(0.5em 0.5em 0.5em rgb(80,80,80));
+  filter: drop-shadow(0.5em 0.5em 0.5em rgb(80,80,80));
+  font-size: 2em;
 }
