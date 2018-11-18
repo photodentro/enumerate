@@ -112,8 +112,9 @@ body {
   filter: brightness(120%) contrast(1.2);
 }
 
-#train img.lose:active {
-  filter: brightness(0.5) sepia(1) hue-rotate(-50deg) saturate(5) !important;
+#train img:not(#w0):active {
+  -webkit-filter: brightness(80%) contrast(1.2) !important;
+  filter: brightness(80%) contrast(1.2) !important;
 }
 
 #w0 {

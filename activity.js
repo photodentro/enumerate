@@ -171,6 +171,10 @@ function onWagonClick(event) {
       sformat('35%, 45% { left: {}em; }', dx),
       '100% { left: -57em; }'].join('\n'), '4s');
     setTimeout(initLevel, 4000, act.level + 1);
+  } else {
+    setKeyframes(event.target, [
+      'from { transform: rotateY(360deg); }',
+      'to { transform: rotateY(0deg); }'].join('\n'), '1s');
   }
 }
 
@@ -207,11 +211,6 @@ function initLevel(newLevel) {
       act.gifts[i].style.display = '';
     } else {
       act.gifts[i].style.display = 'none';
-    }
-    if (i === act.giftsNum - 1) {
-      act.wagons[i].classList.remove('lose');
-    } else {
-      act.wagons[i].classList.add('lose');
     }
   }
   setKeyframes(ge('gifts'), 'from { top: -5em; }\nto { top: 5em; }');
