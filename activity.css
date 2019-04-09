@@ -43,6 +43,7 @@ body {
   display: flex;
   align-content: space-around;
   justify-content: space-around;
+  flex-direction: column;
   flex-wrap: wrap;
   position: relative;
 }
